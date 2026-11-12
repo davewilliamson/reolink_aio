@@ -1980,7 +1980,18 @@ class Baichuan:
         # Get Baichuan capabilities
         try:
             mess = await self.send(cmd_id=199)
-        except (CredentialsInvalidError, LoginAccountDeviceError):
+        except LoginAccountDeviceError:
+            # Account-mode Hubs may permit encrypted HTTP while denying Baichuan.
+            # Only degrade after an authenticated HTTP session was established.
+            if self.http_api._http_crypto is None:
+                raise
+            _LOGGER.debug("Baichuan is unavailable for this account device; using authenticated encrypted HTTP capabilities")
+            self.capabilities.setdefault(None, {}).setdefault(None, set())
+            for channel in self.http_api._stream_channels:
+                for sub_channel in self.http_api.sub_channels(channel):
+                    self.capabilities.setdefault(channel, {}).setdefault(sub_channel, set())
+            return
+        except CredentialsInvalidError:
             raise
         except ReolinkError as err:
             _LOGGER.debug("Baichuan host %s: Could not obtain abilities (cmd_id 199): %s", self._host, str(err).replace(f"Baichuan host {self._host}: ", ""))
