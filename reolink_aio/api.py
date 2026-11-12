@@ -6191,7 +6191,7 @@ class Host:
             return self._url, param
         encrypt = crypto.encrypted_query({key: value for key, value in param.items() if key != "token"})
         # build the url like the web UI does, without percent-encoding the base64 characters
-        return URL(f"{self._url}?token={self._token}&encrypt={encrypt}", encoded=True), None
+        return URL(f"{self._url}?token={param['token']}&encrypt={encrypt}", encoded=True), None
 
     async def send_chunk(
         self,
